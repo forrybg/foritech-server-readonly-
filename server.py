@@ -76,6 +76,10 @@ _DENIED_DIR_NAMES = {
     ".azure",
     ".kube",
     ".password-store",
+    ".config",
+    ".cache",
+    ".step",
+    ".foritech",
 }
 
 # Nested paths (relative to ROOT) that are fully denied as directories.
@@ -88,6 +92,13 @@ _DENIED_EXACT_RELATIVE_PATHS = {
     ".git-credentials",
     ".netrc",
     ".docker/config.json",
+    ".bash_history",
+    ".python_history",
+    ".github_token",
+    ".npmrc",
+    ".pypirc",
+    ".Xauthority",
+    ".foritech_device",
 }
 
 # Filename glob patterns (matched against the final path component only)
@@ -101,6 +112,10 @@ _DENIED_FILENAME_GLOBS = (
     "id_ed25519*",
     "*secret*",
     "*credentials*",
+    "*token*",
+    "*history*",
+    "*.kdbx",
+    "*.ovpn",
 )
 
 

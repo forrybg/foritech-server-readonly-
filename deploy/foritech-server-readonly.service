@@ -39,6 +39,17 @@ InaccessiblePaths=-/home/forybg/.local/share/keyrings
 InaccessiblePaths=-/home/forybg/.docker/config.json
 InaccessiblePaths=-/home/forybg/.git-credentials
 InaccessiblePaths=-/home/forybg/.netrc
+InaccessiblePaths=-/home/forybg/.config
+InaccessiblePaths=-/home/forybg/.cache
+InaccessiblePaths=-/home/forybg/.step
+InaccessiblePaths=-/home/forybg/.foritech
+InaccessiblePaths=-/home/forybg/.bash_history
+InaccessiblePaths=-/home/forybg/.python_history
+InaccessiblePaths=-/home/forybg/.github_token
+InaccessiblePaths=-/home/forybg/.npmrc
+InaccessiblePaths=-/home/forybg/.pypirc
+InaccessiblePaths=-/home/forybg/.Xauthority
+InaccessiblePaths=-/home/forybg/.foritech_device
 
 CapabilityBoundingSet=
 AmbientCapabilities=
