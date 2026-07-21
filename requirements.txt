@@ -1,0 +1,5 @@
+# Foritech Server Read-only uses only the Python standard library.
+# No third-party packages are required to run server.py.
+#
+# Test-only, optional (unittest from stdlib is used if this is absent):
+# pytest>=7.0

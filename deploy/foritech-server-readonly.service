@@ -1,0 +1,51 @@
+[Unit]
+Description=Foritech Server Read-only Diagnostics Service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=forybg
+Group=forybg
+EnvironmentFile=/etc/foritech/server-readonly.env
+WorkingDirectory=/home/forybg/services/foritech-server-readonly
+ExecStart=/usr/bin/python3 /home/forybg/services/foritech-server-readonly/server.py
+
+Restart=on-failure
+RestartSec=5
+
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=read-only
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+ReadWritePaths=/home/forybg/services/foritech-server-readonly
+
+# Defense in depth: even though ProtectHome=read-only already makes all
+# of /home read-only to this service, these paths are additionally made
+# fully inaccessible (not even readable) so a path-validation bug in
+# server.py's own denylist can never be the only thing standing between
+# a bug and a credential file. Leading "-" means systemd will not fail
+# to start the unit if a given path does not exist on this host.
+InaccessiblePaths=-/home/forybg/.ssh
+InaccessiblePaths=-/home/forybg/.gnupg
+InaccessiblePaths=-/home/forybg/.aws
+InaccessiblePaths=-/home/forybg/.azure
+InaccessiblePaths=-/home/forybg/.kube
+InaccessiblePaths=-/home/forybg/.local/share/keyrings
+InaccessiblePaths=-/home/forybg/.docker/config.json
+InaccessiblePaths=-/home/forybg/.git-credentials
+InaccessiblePaths=-/home/forybg/.netrc
+
+CapabilityBoundingSet=
+AmbientCapabilities=
+LockPersonality=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

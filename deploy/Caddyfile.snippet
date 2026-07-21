@@ -1,0 +1,38 @@
+# Insert this `handle` block INSIDE the existing mcp-readonly.foritech.bg
+# site block, BEFORE its existing catch-all `reverse_proxy 127.0.0.1:3110`
+# line. Do not create a second `mcp-readonly.foritech.bg { ... }` block —
+# Caddy only uses the first one it parses for a given host.
+#
+# Before (existing, current production Caddyfile):
+#
+#   mcp-readonly.foritech.bg {
+#       import security_headers
+#       reverse_proxy 127.0.0.1:3110
+#   }
+#
+# After (with this snippet inserted):
+#
+#   mcp-readonly.foritech.bg {
+#       import security_headers
+#
+#       handle /server/* {
+#           reverse_proxy 127.0.0.1:3111
+#       }
+#
+#       handle {
+#           reverse_proxy 127.0.0.1:3110
+#       }
+#   }
+#
+# Notes:
+# - `handle /server/*` forwards the request to 127.0.0.1:3111 with the
+#   `/server` prefix PRESERVED (not stripped) — server.py's own routing
+#   table expects paths like `/server/mcp`, `/server/authorize`,
+#   `/server/token`. If you ever want Caddy to strip the prefix instead,
+#   use `handle_path /server/*` and update ROUTE_PREFIX in server.py to
+#   "" — the two must always be changed together.
+# - The unmodified `handle { reverse_proxy 127.0.0.1:3110 }` catch-all
+#   preserves every existing Diagnostics 3 route (`/mcp`, `/authorize`,
+#   `/token`, its `.well-known` routes) exactly as they are today.
+# - Validate before reloading: `sudo caddy validate --config /etc/caddy/Caddyfile`
+# - Apply with: `sudo systemctl reload caddy` (not part of this task).

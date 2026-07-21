@@ -1,0 +1,29 @@
+{
+  "name": "foritech-server-readonly-policy",
+  "mode": "read-only",
+  "root": "/home/forybg",
+  "allowed_tools": [
+    "server_status",
+    "list_directory",
+    "read_text_file",
+    "search_text",
+    "git_status",
+    "docker_ps",
+    "list_services"
+  ],
+  "forbidden_actions": [
+    "write_file",
+    "edit_file",
+    "move_file",
+    "delete_file",
+    "create_directory",
+    "run_command",
+    "sudo",
+    "systemctl restart",
+    "systemctl stop",
+    "docker compose down",
+    "rm",
+    "chmod",
+    "chown"
+  ]
+}
