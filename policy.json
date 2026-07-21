@@ -13,7 +13,8 @@
     "forisec_context_bootstrap",
     "forisec_context_section",
     "forisec_context_search",
-    "forisec_context_source"
+    "forisec_context_source",
+    "forisec_context_repo_map"
   ],
   "forbidden_actions": [
     "write_file",

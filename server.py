@@ -255,6 +255,7 @@ ALLOWED_TOOLS = {
     "forisec_context_section",
     "forisec_context_search",
     "forisec_context_source",
+    "forisec_context_repo_map",
 }
 
 FORBIDDEN_ACTIONS = {
@@ -738,6 +739,10 @@ def tool_forisec_context_source(args):
     return _forisec_context_get("/api/v1/context/source", {"path": path_value})
 
 
+def tool_forisec_context_repo_map(_args):
+    return _forisec_context_get("/api/v1/context/repo-map")
+
+
 TOOLS = {
     "server_status": tool_server_status,
     "list_directory": tool_list_directory,
@@ -750,6 +755,7 @@ TOOLS = {
     "forisec_context_section": tool_forisec_context_section,
     "forisec_context_search": tool_forisec_context_search,
     "forisec_context_source": tool_forisec_context_source,
+    "forisec_context_repo_map": tool_forisec_context_repo_map,
 }
 
 
@@ -858,6 +864,15 @@ def mcp_tools_list():
                     "properties": {"path": {"type": "string"}},
                     "required": ["path"],
                 },
+            },
+            {
+                "name": "forisec_context_repo_map",
+                "description": "Read-only fixed-endpoint proxy to the forisec-cl3-dashboard "
+                                "repo map API (GET /api/v1/context/repo-map on 127.0.0.1:8766 "
+                                "only) -- a deterministic catalog (path/kind/summary/functions/"
+                                "classes/line_count) of the dashboard SERVICE's own codebase, "
+                                "never the proposal repo.",
+                "inputSchema": {"type": "object", "properties": {}},
             },
         ]
     }

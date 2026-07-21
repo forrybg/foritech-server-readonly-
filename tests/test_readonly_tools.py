@@ -390,11 +390,21 @@ class ForisecContextProxyTests(unittest.TestCase):
                 {"Location": "http://evil.example.com/"}, "http://evil.example.com/",
             )
 
-    def test_all_four_tools_are_registered_in_tools_map_and_allowed(self):
+    def test_all_five_tools_are_registered_in_tools_map_and_allowed(self):
         for name in ("forisec_context_bootstrap", "forisec_context_section",
-                     "forisec_context_search", "forisec_context_source"):
+                     "forisec_context_search", "forisec_context_source",
+                     "forisec_context_repo_map"):
             self.assertIn(name, server_module.TOOLS)
             self.assertIn(name, server_module.ALLOWED_TOOLS)
+
+    def test_repo_map_tool_calls_expected_fixed_path(self):
+        fake_opener = MagicMock()
+        fake_opener.open.return_value = self._mock_response(200, b'{"available": true, "files": []}')
+        with patch.object(server_module, "build_opener", return_value=fake_opener):
+            result = server_module.tool_forisec_context_repo_map({})
+        self.assertEqual(result, {"available": True, "files": []})
+        called_request = fake_opener.open.call_args[0][0]
+        self.assertEqual(called_request.full_url, "http://127.0.0.1:8766/api/v1/context/repo-map")
 
 
 if __name__ == "__main__":
