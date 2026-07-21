@@ -194,7 +194,10 @@ class OutputLimitTests(SandboxedRootTestCase):
 
 
 class NoArbitraryCommandTests(unittest.TestCase):
-    def test_only_seven_tools_are_allowed(self):
+    def test_only_eleven_tools_are_allowed(self):
+        # Grew from 7 to 11 when the four fixed-endpoint forisec_context_*
+        # proxy tools were added -- still an exact, closed set with no
+        # arbitrary-command/arbitrary-URL/arbitrary-filesystem tool.
         self.assertEqual(
             server_module.ALLOWED_TOOLS,
             {
@@ -205,6 +208,10 @@ class NoArbitraryCommandTests(unittest.TestCase):
                 "git_status",
                 "docker_ps",
                 "list_services",
+                "forisec_context_bootstrap",
+                "forisec_context_section",
+                "forisec_context_search",
+                "forisec_context_source",
             },
         )
 

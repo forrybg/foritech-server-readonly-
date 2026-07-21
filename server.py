@@ -31,7 +31,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
-from urllib.request import HTTPRedirectHandler, Request, build_opener
+from urllib.request import HTTPRedirectHandler, Request, build_opener, urlopen
 
 HOST = "127.0.0.1"
 PORT = int(os.environ.get("MCP_SERVER_READONLY_PORT", "3111"))
@@ -251,6 +251,10 @@ ALLOWED_TOOLS = {
     "git_status",
     "docker_ps",
     "list_services",
+    "forisec_context_bootstrap",
+    "forisec_context_section",
+    "forisec_context_search",
+    "forisec_context_source",
 }
 
 FORBIDDEN_ACTIONS = {
@@ -621,6 +625,119 @@ def tool_list_services(_args):
     return {"ok": result["ok"], "returncode": result["returncode"], "lines": lines}
 
 
+# ---------------------------------------------------------------------------
+# forisec-cl3-dashboard project-context proxy tools.
+#
+# These four tools are fixed-endpoint, read-only HTTP GET proxies to the
+# LOCAL forisec-cl3-dashboard project-context API. The base URL is a
+# literal constant -- never environment-overridable, never derived from
+# caller input -- so no caller can ever point this at an arbitrary host,
+# scheme, or port. No filesystem access, no subprocess, no write. Every
+# request has a short fixed timeout and a bounded response size. Input
+# validation here is deliberately conservative (fixed length/character
+# limits) even though the dashboard API enforces its own limits again
+# server-side -- defense in depth, never trust-the-caller.
+# ---------------------------------------------------------------------------
+FORISEC_CONTEXT_BASE_URL = "http://127.0.0.1:8766"  # fixed; do not make env-configurable
+FORISEC_CONTEXT_HTTP_TIMEOUT = 6
+FORISEC_CONTEXT_MAX_RESPONSE_BYTES = 200_000
+_FORISEC_CONTEXT_SECTION_RE = re.compile(r"^[a-z_]{1,64}$")
+
+
+class _NoRedirectHandler(HTTPRedirectHandler):
+    """The dashboard's context API never redirects. Refuse to follow any
+    redirect rather than silently trusting wherever it points."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        raise HTTPError(newurl, code, "Unexpected redirect from context API", headers, fp)
+
+
+def _forisec_context_get(request_path, query=None):
+    """GET request_path (must start with '/') against the fixed
+    FORISEC_CONTEXT_BASE_URL only, with an optional urlencoded query
+    dict. Returns the parsed JSON body, or an {"available": False, ...}
+    envelope on any network/parse failure -- never raises."""
+    assert request_path.startswith("/")
+    url = FORISEC_CONTEXT_BASE_URL + request_path
+    if query:
+        url = url + "?" + urlencode(query)
+    req = Request(url, method="GET", headers={"Accept": "application/json"})
+    opener = build_opener(_NoRedirectHandler())
+    try:
+        with opener.open(req, timeout=FORISEC_CONTEXT_HTTP_TIMEOUT) as response:
+            status = response.status
+            raw = response.read(FORISEC_CONTEXT_MAX_RESPONSE_BYTES + 1)
+    except HTTPError as exc:
+        try:
+            raw = exc.read(FORISEC_CONTEXT_MAX_RESPONSE_BYTES + 1)
+        except Exception:
+            raw = b""
+        status = exc.code
+    except (URLError, TimeoutError, OSError) as exc:
+        return {"available": False, "error": "CONTEXT_SERVICE_UNREACHABLE", "reason": str(exc)}
+
+    truncated = len(raw) > FORISEC_CONTEXT_MAX_RESPONSE_BYTES
+    if truncated:
+        raw = raw[:FORISEC_CONTEXT_MAX_RESPONSE_BYTES]
+    try:
+        body = json.loads(raw.decode("utf-8", errors="replace"))
+    except Exception:
+        return {"available": False, "error": "CONTEXT_SERVICE_BAD_RESPONSE", "http_status": status}
+    if isinstance(body, dict) and truncated:
+        body["_proxy_truncated"] = True
+    return body
+
+
+def tool_forisec_context_bootstrap(_args):
+    return _forisec_context_get("/api/v1/context/bootstrap")
+
+
+def tool_forisec_context_section(args):
+    section = str((args or {}).get("section", "")).strip()
+    if not section or not _FORISEC_CONTEXT_SECTION_RE.match(section):
+        return {"available": False, "error": "INVALID_SECTION"}
+    return _forisec_context_get(f"/api/v1/context/section/{section}")
+
+
+def tool_forisec_context_search(args):
+    args = args or {}
+    q = str(args.get("q", "")).strip()
+    if not (2 <= len(q) <= 300):
+        return {"available": False, "error": "INVALID_QUERY_LENGTH"}
+    query = {"q": q}
+
+    top_k = args.get("top_k")
+    if top_k is not None:
+        try:
+            top_k_int = int(top_k)
+        except (TypeError, ValueError):
+            return {"available": False, "error": "INVALID_TOP_K"}
+        if not (1 <= top_k_int <= 10):
+            return {"available": False, "error": "INVALID_TOP_K"}
+        query["top_k"] = top_k_int
+
+    section = args.get("section")
+    if section is not None:
+        section = str(section).strip()
+        if not _FORISEC_CONTEXT_SECTION_RE.match(section):
+            return {"available": False, "error": "INVALID_SECTION"}
+        query["section"] = section
+
+    return _forisec_context_get("/api/v1/context/search", query)
+
+
+def tool_forisec_context_source(args):
+    path_value = str((args or {}).get("path", "")).strip()
+    if not path_value or len(path_value) > 500:
+        return {"available": False, "error": "INVALID_PATH"}
+    # Absolute-path / traversal / symlink-escape / outside-allowlist
+    # rejection is enforced server-side by context/retrieval.py's
+    # get_source(). This proxy never touches a filesystem itself and
+    # never accepts a host filesystem path -- it only forwards the
+    # string to the dashboard's own already-hardened endpoint.
+    return _forisec_context_get("/api/v1/context/source", {"path": path_value})
+
+
 TOOLS = {
     "server_status": tool_server_status,
     "list_directory": tool_list_directory,
@@ -629,6 +746,10 @@ TOOLS = {
     "git_status": tool_git_status,
     "docker_ps": tool_docker_ps,
     "list_services": tool_list_services,
+    "forisec_context_bootstrap": tool_forisec_context_bootstrap,
+    "forisec_context_section": tool_forisec_context_section,
+    "forisec_context_search": tool_forisec_context_search,
+    "forisec_context_source": tool_forisec_context_source,
 }
 
 
@@ -691,6 +812,52 @@ def mcp_tools_list():
                 "name": "list_services",
                 "description": "Read-only systemd service unit listing.",
                 "inputSchema": {"type": "object", "properties": {}},
+            },
+            {
+                "name": "forisec_context_bootstrap",
+                "description": "Read-only fixed-endpoint proxy to the forisec-cl3-dashboard "
+                                "LEVEL 1 project context bootstrap bundle (GET /api/v1/context/bootstrap "
+                                "on 127.0.0.1:8766 only).",
+                "inputSchema": {"type": "object", "properties": {}},
+            },
+            {
+                "name": "forisec_context_section",
+                "description": "Read-only fixed-endpoint proxy to the forisec-cl3-dashboard "
+                                "LEVEL 2 context section API (GET /api/v1/context/section/{section} "
+                                "on 127.0.0.1:8766 only; section must be one of the dashboard's fixed "
+                                "allowlisted section names).",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {"section": {"type": "string"}},
+                    "required": ["section"],
+                },
+            },
+            {
+                "name": "forisec_context_search",
+                "description": "Read-only fixed-endpoint proxy to the forisec-cl3-dashboard "
+                                "LEVEL 3 context search API (GET /api/v1/context/search "
+                                "on 127.0.0.1:8766 only).",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "q": {"type": "string"},
+                        "top_k": {"type": "integer"},
+                        "section": {"type": "string"},
+                    },
+                    "required": ["q"],
+                },
+            },
+            {
+                "name": "forisec_context_source",
+                "description": "Read-only fixed-endpoint proxy to the forisec-cl3-dashboard "
+                                "LEVEL 3 context source API (GET /api/v1/context/source "
+                                "on 127.0.0.1:8766 only; path must be one of the dashboard's own "
+                                "canonical-source allowlist, enforced server-side).",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {"path": {"type": "string"}},
+                    "required": ["path"],
+                },
             },
         ]
     }

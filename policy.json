@@ -9,7 +9,11 @@
     "search_text",
     "git_status",
     "docker_ps",
-    "list_services"
+    "list_services",
+    "forisec_context_bootstrap",
+    "forisec_context_section",
+    "forisec_context_search",
+    "forisec_context_source"
   ],
   "forbidden_actions": [
     "write_file",
