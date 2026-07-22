@@ -10,11 +10,11 @@
     "git_status",
     "docker_ps",
     "list_services",
-    "forisec_context_bootstrap",
-    "forisec_context_section",
-    "forisec_context_search",
-    "forisec_context_source",
-    "forisec_context_repo_map"
+    "forisec_cl3_2026_context_bootstrap",
+    "forisec_cl3_2026_context_section",
+    "forisec_cl3_2026_context_search",
+    "forisec_cl3_2026_context_source",
+    "forisec_cl3_2026_context_repo_map"
   ],
   "forbidden_actions": [
     "write_file",

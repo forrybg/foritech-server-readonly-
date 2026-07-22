@@ -235,7 +235,7 @@ class DockerPsAndListServicesTests(unittest.TestCase):
 
 
 class ForisecContextProxyTests(unittest.TestCase):
-    """The four forisec_context_* tools are fixed-endpoint HTTP GET
+    """The four forisec_cl3_2026_context_* tools are fixed-endpoint HTTP GET
     proxies to the local forisec-cl3-dashboard project-context API.
     Network calls are mocked here (via server_module.build_opener) so
     these tests never depend on that service actually running."""
@@ -244,7 +244,7 @@ class ForisecContextProxyTests(unittest.TestCase):
         self.assertEqual(server_module.FORISEC_CONTEXT_BASE_URL, "http://127.0.0.1:8766")
         # Not read from any environment variable -- literal constant.
         import inspect
-        source = inspect.getsource(server_module.__dict__.get("_forisec_context_get"))
+        source = inspect.getsource(server_module.__dict__.get("_forisec_cl3_2026_context_get"))
         self.assertNotIn("os.environ", source)
 
     def _mock_response(self, status, body_bytes):
@@ -264,7 +264,7 @@ class ForisecContextProxyTests(unittest.TestCase):
         fake_opener = MagicMock()
         fake_opener.open.return_value = self._mock_response(200, payload)
         with patch.object(server_module, "build_opener", return_value=fake_opener):
-            result = server_module.tool_forisec_context_bootstrap({})
+            result = server_module.tool_forisec_cl3_2026_context_bootstrap({})
         self.assertEqual(result, {"available": True, "freshness": "FRESH"})
         called_request = fake_opener.open.call_args[0][0]
         self.assertEqual(called_request.full_url, "http://127.0.0.1:8766/api/v1/context/bootstrap")
@@ -276,54 +276,54 @@ class ForisecContextProxyTests(unittest.TestCase):
         fake_opener = MagicMock()
         fake_opener.open.return_value = self._mock_response(200, b"{}")
         with patch.object(server_module, "build_opener", return_value=fake_opener) as mock_builder:
-            server_module.tool_forisec_context_bootstrap({"host": "evil.example.com", "url": "http://evil.example.com"})
+            server_module.tool_forisec_cl3_2026_context_bootstrap({"host": "evil.example.com", "url": "http://evil.example.com"})
         called_request = fake_opener.open.call_args[0][0]
         self.assertTrue(called_request.full_url.startswith("http://127.0.0.1:8766/"))
 
     def test_section_rejects_invalid_characters_without_any_network_call(self):
         fake_opener = MagicMock()
         with patch.object(server_module, "build_opener", return_value=fake_opener):
-            result = server_module.tool_forisec_context_section({"section": "../../etc/passwd"})
+            result = server_module.tool_forisec_cl3_2026_context_section({"section": "../../etc/passwd"})
         self.assertEqual(result, {"available": False, "error": "INVALID_SECTION"})
         fake_opener.open.assert_not_called()
 
     def test_section_rejects_empty_string(self):
-        result = server_module.tool_forisec_context_section({"section": ""})
+        result = server_module.tool_forisec_cl3_2026_context_section({"section": ""})
         self.assertEqual(result, {"available": False, "error": "INVALID_SECTION"})
 
     def test_section_valid_name_builds_expected_path(self):
         fake_opener = MagicMock()
         fake_opener.open.return_value = self._mock_response(200, b'{"available": true}')
         with patch.object(server_module, "build_opener", return_value=fake_opener):
-            server_module.tool_forisec_context_section({"section": "architecture"})
+            server_module.tool_forisec_cl3_2026_context_section({"section": "architecture"})
         called_request = fake_opener.open.call_args[0][0]
         self.assertEqual(called_request.full_url, "http://127.0.0.1:8766/api/v1/context/section/architecture")
 
     def test_search_rejects_query_too_short(self):
-        result = server_module.tool_forisec_context_search({"q": "a"})
+        result = server_module.tool_forisec_cl3_2026_context_search({"q": "a"})
         self.assertEqual(result, {"available": False, "error": "INVALID_QUERY_LENGTH"})
 
     def test_search_rejects_query_too_long(self):
-        result = server_module.tool_forisec_context_search({"q": "x" * 301})
+        result = server_module.tool_forisec_cl3_2026_context_search({"q": "x" * 301})
         self.assertEqual(result, {"available": False, "error": "INVALID_QUERY_LENGTH"})
 
     def test_search_rejects_out_of_range_top_k(self):
-        result = server_module.tool_forisec_context_search({"q": "budget", "top_k": 999})
+        result = server_module.tool_forisec_cl3_2026_context_search({"q": "budget", "top_k": 999})
         self.assertEqual(result, {"available": False, "error": "INVALID_TOP_K"})
 
     def test_search_rejects_non_integer_top_k(self):
-        result = server_module.tool_forisec_context_search({"q": "budget", "top_k": "lots"})
+        result = server_module.tool_forisec_cl3_2026_context_search({"q": "budget", "top_k": "lots"})
         self.assertEqual(result, {"available": False, "error": "INVALID_TOP_K"})
 
     def test_search_rejects_invalid_section_filter(self):
-        result = server_module.tool_forisec_context_search({"q": "budget", "section": "'; DROP TABLE chunks; --"})
+        result = server_module.tool_forisec_cl3_2026_context_search({"q": "budget", "section": "'; DROP TABLE chunks; --"})
         self.assertEqual(result, {"available": False, "error": "INVALID_SECTION"})
 
     def test_search_builds_expected_query_string(self):
         fake_opener = MagicMock()
         fake_opener.open.return_value = self._mock_response(200, b'{"available": true}')
         with patch.object(server_module, "build_opener", return_value=fake_opener):
-            server_module.tool_forisec_context_search({"q": "budget reconciliation", "top_k": 3, "section": "budget"})
+            server_module.tool_forisec_cl3_2026_context_search({"q": "budget reconciliation", "top_k": 3, "section": "budget"})
         called_request = fake_opener.open.call_args[0][0]
         self.assertTrue(called_request.full_url.startswith("http://127.0.0.1:8766/api/v1/context/search?"))
         self.assertIn("q=budget", called_request.full_url)
@@ -339,25 +339,25 @@ class ForisecContextProxyTests(unittest.TestCase):
             200, json.dumps({"available": False, "error": "ABSOLUTE_PATH_REJECTED"}).encode("utf-8")
         )
         with patch.object(server_module, "build_opener", return_value=fake_opener):
-            result = server_module.tool_forisec_context_source({"path": "/etc/passwd"})
+            result = server_module.tool_forisec_cl3_2026_context_source({"path": "/etc/passwd"})
         self.assertEqual(result["error"], "ABSOLUTE_PATH_REJECTED")
 
     def test_source_rejects_empty_path_without_network_call(self):
         fake_opener = MagicMock()
         with patch.object(server_module, "build_opener", return_value=fake_opener):
-            result = server_module.tool_forisec_context_source({"path": ""})
+            result = server_module.tool_forisec_cl3_2026_context_source({"path": ""})
         self.assertEqual(result, {"available": False, "error": "INVALID_PATH"})
         fake_opener.open.assert_not_called()
 
     def test_source_rejects_oversized_path(self):
-        result = server_module.tool_forisec_context_source({"path": "a" * 501})
+        result = server_module.tool_forisec_cl3_2026_context_source({"path": "a" * 501})
         self.assertEqual(result, {"available": False, "error": "INVALID_PATH"})
 
     def test_unreachable_service_returns_envelope_not_exception(self):
         fake_opener = MagicMock()
         fake_opener.open.side_effect = server_module.URLError("connection refused")
         with patch.object(server_module, "build_opener", return_value=fake_opener):
-            result = server_module.tool_forisec_context_bootstrap({})
+            result = server_module.tool_forisec_cl3_2026_context_bootstrap({})
         self.assertFalse(result["available"])
         self.assertEqual(result["error"], "CONTEXT_SERVICE_UNREACHABLE")
 
@@ -365,7 +365,7 @@ class ForisecContextProxyTests(unittest.TestCase):
         fake_opener = MagicMock()
         fake_opener.open.return_value = self._mock_response(200, b"not json {{{")
         with patch.object(server_module, "build_opener", return_value=fake_opener):
-            result = server_module.tool_forisec_context_bootstrap({})
+            result = server_module.tool_forisec_cl3_2026_context_bootstrap({})
         self.assertFalse(result["available"])
         self.assertEqual(result["error"], "CONTEXT_SERVICE_BAD_RESPONSE")
 
@@ -374,7 +374,7 @@ class ForisecContextProxyTests(unittest.TestCase):
         fake_opener = MagicMock()
         fake_opener.open.return_value = self._mock_response(200, big_body)
         with patch.object(server_module, "build_opener", return_value=fake_opener):
-            result = server_module.tool_forisec_context_bootstrap({})
+            result = server_module.tool_forisec_cl3_2026_context_bootstrap({})
         # Either it parsed fine (if truncation landed on a JSON boundary) or
         # it degraded to a bad-response envelope -- either way, no crash.
         self.assertIsInstance(result, dict)
@@ -391,9 +391,9 @@ class ForisecContextProxyTests(unittest.TestCase):
             )
 
     def test_all_five_tools_are_registered_in_tools_map_and_allowed(self):
-        for name in ("forisec_context_bootstrap", "forisec_context_section",
-                     "forisec_context_search", "forisec_context_source",
-                     "forisec_context_repo_map"):
+        for name in ("forisec_cl3_2026_context_bootstrap", "forisec_cl3_2026_context_section",
+                     "forisec_cl3_2026_context_search", "forisec_cl3_2026_context_source",
+                     "forisec_cl3_2026_context_repo_map"):
             self.assertIn(name, server_module.TOOLS)
             self.assertIn(name, server_module.ALLOWED_TOOLS)
 
@@ -401,7 +401,7 @@ class ForisecContextProxyTests(unittest.TestCase):
         fake_opener = MagicMock()
         fake_opener.open.return_value = self._mock_response(200, b'{"available": true, "files": []}')
         with patch.object(server_module, "build_opener", return_value=fake_opener):
-            result = server_module.tool_forisec_context_repo_map({})
+            result = server_module.tool_forisec_cl3_2026_context_repo_map({})
         self.assertEqual(result, {"available": True, "files": []})
         called_request = fake_opener.open.call_args[0][0]
         self.assertEqual(called_request.full_url, "http://127.0.0.1:8766/api/v1/context/repo-map")

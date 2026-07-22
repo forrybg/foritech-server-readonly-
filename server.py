@@ -251,11 +251,11 @@ ALLOWED_TOOLS = {
     "git_status",
     "docker_ps",
     "list_services",
-    "forisec_context_bootstrap",
-    "forisec_context_section",
-    "forisec_context_search",
-    "forisec_context_source",
-    "forisec_context_repo_map",
+    "forisec_cl3_2026_context_bootstrap",
+    "forisec_cl3_2026_context_section",
+    "forisec_cl3_2026_context_search",
+    "forisec_cl3_2026_context_source",
+    "forisec_cl3_2026_context_repo_map",
 }
 
 FORBIDDEN_ACTIONS = {
@@ -653,7 +653,7 @@ class _NoRedirectHandler(HTTPRedirectHandler):
         raise HTTPError(newurl, code, "Unexpected redirect from context API", headers, fp)
 
 
-def _forisec_context_get(request_path, query=None):
+def _forisec_cl3_2026_context_get(request_path, query=None):
     """GET request_path (must start with '/') against the fixed
     FORISEC_CONTEXT_BASE_URL only, with an optional urlencoded query
     dict. Returns the parsed JSON body, or an {"available": False, ...}
@@ -689,18 +689,18 @@ def _forisec_context_get(request_path, query=None):
     return body
 
 
-def tool_forisec_context_bootstrap(_args):
-    return _forisec_context_get("/api/v1/context/bootstrap")
+def tool_forisec_cl3_2026_context_bootstrap(_args):
+    return _forisec_cl3_2026_context_get("/api/v1/context/bootstrap")
 
 
-def tool_forisec_context_section(args):
+def tool_forisec_cl3_2026_context_section(args):
     section = str((args or {}).get("section", "")).strip()
     if not section or not _FORISEC_CONTEXT_SECTION_RE.match(section):
         return {"available": False, "error": "INVALID_SECTION"}
-    return _forisec_context_get(f"/api/v1/context/section/{section}")
+    return _forisec_cl3_2026_context_get(f"/api/v1/context/section/{section}")
 
 
-def tool_forisec_context_search(args):
+def tool_forisec_cl3_2026_context_search(args):
     args = args or {}
     q = str(args.get("q", "")).strip()
     if not (2 <= len(q) <= 300):
@@ -724,10 +724,10 @@ def tool_forisec_context_search(args):
             return {"available": False, "error": "INVALID_SECTION"}
         query["section"] = section
 
-    return _forisec_context_get("/api/v1/context/search", query)
+    return _forisec_cl3_2026_context_get("/api/v1/context/search", query)
 
 
-def tool_forisec_context_source(args):
+def tool_forisec_cl3_2026_context_source(args):
     path_value = str((args or {}).get("path", "")).strip()
     if not path_value or len(path_value) > 500:
         return {"available": False, "error": "INVALID_PATH"}
@@ -736,11 +736,11 @@ def tool_forisec_context_source(args):
     # get_source(). This proxy never touches a filesystem itself and
     # never accepts a host filesystem path -- it only forwards the
     # string to the dashboard's own already-hardened endpoint.
-    return _forisec_context_get("/api/v1/context/source", {"path": path_value})
+    return _forisec_cl3_2026_context_get("/api/v1/context/source", {"path": path_value})
 
 
-def tool_forisec_context_repo_map(_args):
-    return _forisec_context_get("/api/v1/context/repo-map")
+def tool_forisec_cl3_2026_context_repo_map(_args):
+    return _forisec_cl3_2026_context_get("/api/v1/context/repo-map")
 
 
 TOOLS = {
@@ -751,11 +751,11 @@ TOOLS = {
     "git_status": tool_git_status,
     "docker_ps": tool_docker_ps,
     "list_services": tool_list_services,
-    "forisec_context_bootstrap": tool_forisec_context_bootstrap,
-    "forisec_context_section": tool_forisec_context_section,
-    "forisec_context_search": tool_forisec_context_search,
-    "forisec_context_source": tool_forisec_context_source,
-    "forisec_context_repo_map": tool_forisec_context_repo_map,
+    "forisec_cl3_2026_context_bootstrap": tool_forisec_cl3_2026_context_bootstrap,
+    "forisec_cl3_2026_context_section": tool_forisec_cl3_2026_context_section,
+    "forisec_cl3_2026_context_search": tool_forisec_cl3_2026_context_search,
+    "forisec_cl3_2026_context_source": tool_forisec_cl3_2026_context_source,
+    "forisec_cl3_2026_context_repo_map": tool_forisec_cl3_2026_context_repo_map,
 }
 
 
@@ -820,14 +820,14 @@ def mcp_tools_list():
                 "inputSchema": {"type": "object", "properties": {}},
             },
             {
-                "name": "forisec_context_bootstrap",
+                "name": "forisec_cl3_2026_context_bootstrap",
                 "description": "Read-only fixed-endpoint proxy to the forisec-cl3-dashboard "
                                 "LEVEL 1 project context bootstrap bundle (GET /api/v1/context/bootstrap "
                                 "on 127.0.0.1:8766 only).",
                 "inputSchema": {"type": "object", "properties": {}},
             },
             {
-                "name": "forisec_context_section",
+                "name": "forisec_cl3_2026_context_section",
                 "description": "Read-only fixed-endpoint proxy to the forisec-cl3-dashboard "
                                 "LEVEL 2 context section API (GET /api/v1/context/section/{section} "
                                 "on 127.0.0.1:8766 only; section must be one of the dashboard's fixed "
@@ -839,7 +839,7 @@ def mcp_tools_list():
                 },
             },
             {
-                "name": "forisec_context_search",
+                "name": "forisec_cl3_2026_context_search",
                 "description": "Read-only fixed-endpoint proxy to the forisec-cl3-dashboard "
                                 "LEVEL 3 context search API (GET /api/v1/context/search "
                                 "on 127.0.0.1:8766 only).",
@@ -854,7 +854,7 @@ def mcp_tools_list():
                 },
             },
             {
-                "name": "forisec_context_source",
+                "name": "forisec_cl3_2026_context_source",
                 "description": "Read-only fixed-endpoint proxy to the forisec-cl3-dashboard "
                                 "LEVEL 3 context source API (GET /api/v1/context/source "
                                 "on 127.0.0.1:8766 only; path must be one of the dashboard's own "
@@ -866,7 +866,7 @@ def mcp_tools_list():
                 },
             },
             {
-                "name": "forisec_context_repo_map",
+                "name": "forisec_cl3_2026_context_repo_map",
                 "description": "Read-only fixed-endpoint proxy to the forisec-cl3-dashboard "
                                 "repo map API (GET /api/v1/context/repo-map on 127.0.0.1:8766 "
                                 "only) -- a deterministic catalog (path/kind/summary/functions/"
